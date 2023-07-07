@@ -16,10 +16,6 @@ app.use('/css', express.static(path.join(__dirname, 'public/css'), {
   }
 }));
 
-app.get('/', (req, res) => 
-  res.sendFile(path.join(__dirname, '/public/index.html'))
-)
-
 app.get('/notes', (req, res) => {
   res.sendFile(path.join(__dirname, '/public/notes.html'))
 })
@@ -79,6 +75,9 @@ app.delete('/api/notes:title', (req,res) => {
 
 
 
+app.get('/', (req, res) => 
+  res.sendFile(path.join(__dirname, '/public/index.html'))
+)
 
   app.listen(PORT, (err) => {
     if (err) console.log(err);
