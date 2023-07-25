@@ -16,6 +16,7 @@ app.use('/css', express.static(path.join(__dirname, 'public/css'), {
   }
 }));
 
+
 app.get('/notes', (req, res) => {
   res.sendFile(path.join(__dirname, '/public/notes.html'))
 })
@@ -23,7 +24,6 @@ app.get('/notes', (req, res) => {
 app.post('/api/notes', async (req, res) => {
 
   const { title, text } = req.body
-
 
   if (!title || !text) {
     return res.status(500).json(`Please enter in a title or text to add note`)
@@ -34,7 +34,7 @@ app.post('/api/notes', async (req, res) => {
       text
     }
     
-    fs.readFile('./db/db.json', 'utf8', (err, data)  => {
+    fs.readFile(path.join(__dirname, './public/notes.html'), 'utf8', (err, data)  => {
       if (err) {
         console.error("err");
       } else {
@@ -56,11 +56,6 @@ app.post('/api/notes', async (req, res) => {
         }
           )
         }})
-      
-    
-  
-  
-
 })
 
 
@@ -68,10 +63,47 @@ app.post('/api/notes', async (req, res) => {
 
 
 
-app.delete('/api/notes:title', (req,res) => {
-  const noteId = req.params.title;
-  res.status(200).json({message: 'Delete Successful'})
-})
+app.delete('/api/notes/:title', (req, res) => {
+  const noteTitleToDelete = req.params.title;
+
+  // Read the existing data from the JSON file
+  fs.readFile('./db/db.json', 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Error reading the database' });
+    }
+
+    try {
+      // Parse the data to an array of notes
+      const notes = JSON.parse(data);
+
+      // Find the index of the note to delete based on the title
+      const noteIndexToDelete = notes.findIndex(note => note.title === noteTitleToDelete);
+
+      if (noteIndexToDelete === -1) {
+        // If the note with the provided title is not found, return a 404 response
+        return res.status(404).json({ message: 'Note not found' });
+      }
+
+      // Remove the note from the array using splice
+      notes.splice(noteIndexToDelete, 1);
+
+      // Write the updated data back to the JSON file
+      fs.writeFile('./db/db.json', JSON.stringify(notes), (writeErr) => {
+        if (writeErr) {
+          console.error(writeErr);
+          return res.status(500).json({ message: 'Error writing to the database' });
+        }
+
+        // Respond with a success message
+        res.status(200).json({ message: 'Delete Successful' });
+      });
+    } catch (parseErr) {
+      console.error(parseErr);
+      res.status(500).json({ message: 'Error parsing the database' });
+    }
+  });
+});
 
 
 
