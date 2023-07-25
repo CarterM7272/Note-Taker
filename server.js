@@ -21,6 +21,20 @@ app.get('/notes', (req, res) => {
   res.sendFile(path.join(__dirname, '/public/notes.html'))
 })
 
+app.get("/api/notes", (req, res) => {
+    const { title, text } = res.body
+
+  fs.readFile(path.join(__dirname, './db/db.json'), 'utf8', (err, data) => {
+    if (err) {
+      console.log(err)
+    } else {
+      const addedNotes = JSON.parse(data);
+
+      
+    }
+  })
+})
+
 app.post('/api/notes', async (req, res) => {
 
   const { title, text } = req.body
@@ -57,11 +71,6 @@ app.post('/api/notes', async (req, res) => {
           )
         }})
 })
-
-
-
-
-
 
 app.delete('/api/notes/:title', (req, res) => {
   const noteTitleToDelete = req.params.title;
