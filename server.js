@@ -1,6 +1,9 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const { v1: uuidv1 } = require('uuid');
+
+const id = uuidv1();
 
 const PORT = 3001;
 const app = express();
@@ -47,6 +50,7 @@ app.post('/api/notes', (req, res) => {
   }
 
   const newNote = {
+    id,
     title,
     text,
   };
