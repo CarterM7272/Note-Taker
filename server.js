@@ -21,59 +21,69 @@ app.get('/notes', (req, res) => {
   res.sendFile(path.join(__dirname, '/public/notes.html'))
 })
 
-app.get("/api/notes", (req, res) => {
-    const { title, text } = res.body
-
-  fs.readFile(path.join(__dirname, './db/db.json'), 'utf8', (err, data) => {
+app.get('/api/notes', (req, res) => {
+  fs.readFile('./db/db.json', 'utf8', (err, data) => {
     if (err) {
-      console.log(err)
-    } else {
-      const addedNotes = JSON.parse(data);
-
-      
+      console.error(err);
+      return res.status(500).json({ message: 'Error reading the database' });
     }
-  })
-})
 
-app.post('/api/notes', async (req, res) => {
+    try {
+      // Parse the data to an array of notes
+      const notes = JSON.parse(data);
+      res.status(200).json(notes);
+    } catch (parseErr) {
+      console.error(parseErr);
+      res.status(500).json({ message: 'Error parsing the database' });
+    }
+  });
+});
 
-  const { title, text } = req.body
+app.post('/api/notes', (req, res) => {
+  const { title, text } = req.body;
 
   if (!title || !text) {
-    return res.status(500).json(`Please enter in a title or text to add note`)
+    return res.status(400).json({ message: 'Please enter a title and text to add a note.' });
   }
 
-    const noteRequirements = {
-      title,
-      text
+  const newNote = {
+    title,
+    text,
+  };
+
+  fs.readFile('./db/db.json', 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Error reading the database' });
     }
-    
-    fs.readFile(path.join(__dirname, './public/notes.html'), 'utf8', (err, data)  => {
-      if (err) {
-        console.error("err");
-      } else {
-        const newNote = JSON.parse(data);
 
-        newNote.push(noteRequirements)
+    try {
+      // Parse the existing data to an array of notes
+      const notes = JSON.parse(data);
 
-        fs.writeFile(`./db/db.json`, JSON.stringify(newNote), (writeErr) => {
-          if (writeErr) {
-            console.err(writeErr)
-          } else {
-            const response = {
-              status: 'success',
-              body: newNote,
-            };
-            console.log(response);
-            res.status(201).json(response)
-          }
+      // Add the new note to the array
+      notes.push(newNote);
+
+      // Write the updated data back to the db.json file
+      fs.writeFile('./db/db.json', JSON.stringify(notes), (writeErr) => {
+        if (writeErr) {
+          console.error(writeErr);
+          return res.status(500).json({ message: 'Error writing to the database' });
         }
-          )
-        }})
-})
 
-app.delete('/api/notes/:title', (req, res) => {
-  const noteTitleToDelete = req.params.title;
+        // Respond with the new note as a JSON response
+        res.status(201).json(newNote);
+      });
+    } catch (parseErr) {
+      console.error(parseErr);
+      res.status(500).json({ message: 'Error parsing the database' });
+    }
+  });
+});
+
+// Endpoint to delete a note
+app.delete('/api/notes/:id', (req, res) => {
+  const noteIdToDelete = req.params.id;
 
   // Read the existing data from the JSON file
   fs.readFile('./db/db.json', 'utf8', (err, data) => {
@@ -84,13 +94,13 @@ app.delete('/api/notes/:title', (req, res) => {
 
     try {
       // Parse the data to an array of notes
-      const notes = JSON.parse(data);
+      let notes = JSON.parse(data);
 
-      // Find the index of the note to delete based on the title
-      const noteIndexToDelete = notes.findIndex(note => note.title === noteTitleToDelete);
+      // Find the index of the note to delete based on the id
+      const noteIndexToDelete = notes.findIndex(note => note.id === noteIdToDelete);
 
       if (noteIndexToDelete === -1) {
-        // If the note with the provided title is not found, return a 404 response
+        // If the note with the provided id is not found, return a 404 response
         return res.status(404).json({ message: 'Note not found' });
       }
 
@@ -116,14 +126,15 @@ app.delete('/api/notes/:title', (req, res) => {
 
 
 
+
 app.get('/', (req, res) => 
   res.sendFile(path.join(__dirname, '/public/index.html'))
 )
 
-  app.listen(PORT, (err) => {
-    if (err) console.log(err);
-    console.log(`App listening on Post: ${PORT}`);
-  });
+app.listen(PORT, (err) => {
+  if (err) console.log(err);
+  console.log(`App listening on Post: ${PORT}`);
+});
 
 
 
